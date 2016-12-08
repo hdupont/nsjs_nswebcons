@@ -1,4 +1,13 @@
-> Conventions architecturales
+> Organisation du projet
 
-Chaque dossier contient un fichier du mÃªme nom.
-Ce fichier contient le namespace de l'abstraction Ã  laquelle correspond le dossier.
+La racine du projet est le dossier main.
+La racine du projet contient le point d'entrée de l'application, main.js, et le namespace de l'application, nscon.js.
+Le nom du fichier contenant le namespace est le meme que le namespace. 
+Chaque dossier contient un fichier du meme nom.
+Ce fichier contient le namespace de l'abstraction a laquelle correspond le dossier.
+
+> Conventions de nommage
+
+Un nom de fichier commencant par "cl_" contient une "classe".
+Le nom des classes est précédé de "H_" pour éviter les conflits.
+Par exemple, le fichier cl_h_oneopcalculator.js. contient la classe H_OneOpCalculator.
