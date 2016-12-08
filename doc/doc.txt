@@ -1,0 +1,4 @@
+> Conventions architecturales
+
+Chaque dossier contient un fichier du même nom.
+Ce fichier contient le namespace de l'abstraction à laquelle correspond le dossier.
