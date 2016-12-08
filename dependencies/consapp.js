@@ -422,6 +422,15 @@ webcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	return Commands;
 })(webcons.InlineCommand, webcons.InteractiveCommand);
 
+webcons.CommandInterpreter = (function() {
+	function CommandInterpreter(name, handler) {
+		Command.call(this, name, handler);
+	}
+	
+	return CommandInterpreter
+})();
+
+
 // --------------
 // class Console
 // --------------
