@@ -254,7 +254,7 @@ webcons.CommandApi = (function() {
 		 *  > cmd    ab c d   
 		 *  getStringParam retournera "ab c d"
 		 */
-		return this._cmd.getCmdArgsStringApiFun(this._inputLine)();
+		return this._cmd.getCmdArgsString(this._inputLine);
 	};
 	
 	return CommandApi;
@@ -297,11 +297,9 @@ webcons.Command = (function(CommandApi) {
 	Command.prototype.isQuittingTime = function(inputLine) {
 		return this._quittingTime;
 	};
-	Command.prototype.getCmdArgsStringApiFun = function(inputLine) {
-		return function() {
-			inputLine.parseToken();
-			return inputLine.getInputString();
-		};
+	Command.prototype.getCmdArgsString = function(inputLine) {
+		inputLine.parseToken();
+		return inputLine.getInputString();
 	};
 	
 	function getOption(self, optionName) {
@@ -376,10 +374,8 @@ webcons.InteractiveCommand = (function(Command) {
 		
 		return res;
 	};
-	InteractiveCommand.prototype.getCmdArgsStringApiFun = function(inputLine) {
-		return function() {
-			return inputLine.getInputString();
-		};
+	InteractiveCommand.prototype.getCmdArgsString = function(inputLine) {
+		return inputLine.getInputString();
 	};
 	
 	return InteractiveCommand;
