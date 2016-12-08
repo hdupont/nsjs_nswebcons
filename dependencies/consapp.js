@@ -240,7 +240,6 @@ webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
 //class CommandApi
 //----------------
 //Une CommandApi est l'API utilisable par une commande.
-//Il y a deux types de commandes.
 webcons.CommandApi = (function() {
 	function CommandApi(cmd, inputLine) {
 		this._cmd = cmd;
@@ -265,8 +264,6 @@ webcons.CommandApi = (function() {
 //-------------
 // Une Command est une commande que la console peut exécuter.
 // Il y a deux types de commandes.
-
-// 2. InteractiveCommand 
 webcons.Command = (function(CommandApi) {
 	
 	function Command(name, handler, isInteractive) {
