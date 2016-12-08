@@ -236,6 +236,30 @@ webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
 	return ConsoleLine;	
 })(webcons.Character, webcons.LineDomView, webcons.InputLine);
 
+//----------------
+//class CommandApi
+//----------------
+//Une CommandApi est l'API utilisable par une commande.
+//Il y a deux types de commandes.
+webcons.CommandApi = (function() {
+	function CommandApi(cmd, inputLine) {
+		this._cmd = cmd;
+		this._inputLine = inputLine;
+	}
+	CommandApi.prototype.cmdArgsString = function() {
+		/**
+		 *  Retourne ce qui suit le nom de la commande sous forme de string,
+		 *  en supprimant les espaces au début et à la fin.
+		 *  Par exemple, pour la commande cmd suivante
+		 *  > cmd    ab c d   
+		 *  getStringParam retournera "ab c d"
+		 */
+		return this._cmd.getCmdArgsStringApiFun(this._inputLine)();
+	};
+	
+	return CommandApi;
+})();
+
 //-------------
 //class Command
 //-------------
@@ -243,7 +267,7 @@ webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
 // Il y a deux types de commandes.
 
 // 2. InteractiveCommand 
-webcons.Command = (function() {
+webcons.Command = (function(CommandApi) {
 	
 	function Command(name, handler, isInteractive) {
 		this._name = name;
@@ -256,7 +280,7 @@ webcons.Command = (function() {
 		return this._name;
 	};
 	Command.prototype.execute = function(inputLine) {
-		return this._handler(this.createApi(inputLine));
+		return this._handler(new CommandApi(this, inputLine));
 	};
 	Command.prototype.setArgs = function(args) {
 		return this._args = args;
@@ -279,20 +303,6 @@ webcons.Command = (function() {
 			return inputLine.getInputString();
 		};
 	};
-	// TODO déplacer la création de l'api dans Commands
-	Command.prototype.createApi = function(inputLine) {
-		var self = this;
-		return {
-			/**
-			 *  Retourne ce qui suit le nom de la commande sous forme de string,
-			 *  en supprimant les espaces au début et à la fin.
-			 *  Par exemple, pour la commande cmd suivante
-			 *  > cmd    ab c d   
-			 *  getStringParam retournera "ab c d"
-			 */
-			cmdArgsString: self.getCmdArgsStringApiFun(inputLine)
-		}
-	};
 	
 	function getOption(self, optionName) {
 		var option = null;
@@ -312,7 +322,7 @@ webcons.Command = (function() {
 	}
 	
 	return Command;
-})();
+})(webcons.CommandApi);
 
 //-------------------
 //class InlineCommand
