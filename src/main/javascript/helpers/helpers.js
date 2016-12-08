@@ -1,1 +1,1 @@
-nscon.cmds.helpers = {};
+nscon.helpers = {};
