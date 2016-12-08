@@ -291,7 +291,7 @@ webcons.Command = (function(CommandApi) {
 	Command.prototype.isInteractive = function(inputString) {
 		return this._isInteractive;
 	};
-	Command.prototype.isQuittingTime = function(inputLine) {
+	Command.prototype.isQuittingTime = function() {
 		return this._quittingTime;
 	};
 	Command.prototype.getCmdArgsString = function(inputLine) {
@@ -582,13 +582,13 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 				output = that._currentCommand.execute(inputLine);
 				
 				// La commande a terminé son exécution.
-				if (that._currentCommand.isQuittingTime(inputLine)) {
+				if (that._currentCommand.isQuittingTime()) {
 					// La console reprend la main. Cf. ce qui se passe quand il n'y a pas
 					// de commande en cours d'exécution.
 					that._currentCommand = null;
 				}
-				
-				if (typeof output !== "undefined" || output !== "") {
+
+				if (typeof output !== "undefined" && output !== "") {
 					outputLine(that, output);
 				}
 				
