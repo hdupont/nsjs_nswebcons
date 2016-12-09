@@ -584,7 +584,7 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 					that._currentInteractiveCommand = loadedCommand;
 				}
 				
-				// Si on a réussi à charger une commande à on l'exécute.
+				// Si on a réussi à charger une commande on l'exécute.
 				// Sinon on le signale à l'utilisateur (via la commande par défaut)
 				// et on attend une nouvelle input. 
 				if (loadedCommand === null) {
