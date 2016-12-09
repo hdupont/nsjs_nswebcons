@@ -1,0 +1,15 @@
+> les commandes gèrent leur outupt
+
+Ce n'est pas à la console de recevoir un résultat et de l'afficher.
+C'est à la commande d'afficher son résultat (peut-etre via un api.output();
+
+> Execute est plutot onInput
+
+command.onInput(input)
+
+onInput(input) {
+	faire quelque chose
+}
+
+Pour faire ses outuput la commande à besoin de créer des ligne d'output.
+Donc c'est à déplacer de la console dans la commande.

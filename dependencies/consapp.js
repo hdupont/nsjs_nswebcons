@@ -241,19 +241,23 @@ webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
 //----------------
 //Une CommandApi est l'API utilisable par une commande.
 webcons.CommandApi = (function() {
-	function CommandApi(cmd, inputLine) {
+	function CommandApi(cmd, inputLine, outputLine) {
 		this._cmd = cmd;
 		this._inputLine = inputLine;
+		this._outputLine = outputLine;
 	}
+	/**
+	 *  Retourne ce qui suit le nom de la commande sous forme de string,
+	 *  en supprimant les espaces au début et à la fin.
+	 *  Par exemple, pour la commande cmd suivante
+	 *  > cmd    ab c d   
+	 *  getStringParam retournera "ab c d"
+	 */
 	CommandApi.prototype.cmdArgsString = function() {
-		/**
-		 *  Retourne ce qui suit le nom de la commande sous forme de string,
-		 *  en supprimant les espaces au début et à la fin.
-		 *  Par exemple, pour la commande cmd suivante
-		 *  > cmd    ab c d   
-		 *  getStringParam retournera "ab c d"
-		 */
 		return this._cmd.getCmdArgsString(this._inputLine);
+	};
+	CommandApi.prototype.output = function(cmdOutput) {
+		this.outputLine.output(cmdOutput);
 	};
 	
 	return CommandApi;
@@ -276,8 +280,8 @@ webcons.Command = (function(CommandApi) {
 	Command.prototype.getName = function() {
 		return this._name;
 	};
-	Command.prototype.execute = function(inputLine) {
-		return this._handler(new CommandApi(this, inputLine));
+	Command.prototype.onInput = function(inputLine, outputLine) {
+		return this._handler(new CommandApi(this, inputLine, outputLine));
 	};
 	Command.prototype.setArgs = function(args) {
 		return this._args = args;
@@ -352,7 +356,7 @@ webcons.InteractiveCommand = (function(Command) {
 	}
 	InteractiveCommand.prototype = new Command();
 	
-	InteractiveCommand.prototype.execute = function(inputLine) {
+	InteractiveCommand.prototype.onInput = function(inputLine) {
 		if (this._isFirstExecution) {
 			this._isFirstExecution = false;
 			this._quittingTime = false;
@@ -443,8 +447,11 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 	function Console() {
 		this._domElt = null; // Un singleton.
 		this._commands = new Commands();
-		this._promptLine = null;
+		//WIP La console gère deux types de commande: inline et interactive
+		this._interactiveCommands = new Commands();
+		this._ioLine = null;
 		this._currentCommand = null;
+		this._currentInteractiveCommand = null;
 		this._prompt = "console> ";
 	}
 	
@@ -464,20 +471,19 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 		return this._domElt;
 	};
 	Console.prototype.moveCursorLeft = function() {
-		this._promptLine.moveLeft();
+		this._ioLine.moveLeft();
 	};
 	Console.prototype.moveCursorRight = function() {
-		this._promptLine.moveRight();
+		this._ioLine.moveRight();
 	};
 	Console.prototype.deleteCharFromLine = function() {
-		this._promptLine.deleteChar();
+		this._ioLine.deleteChar();
 	};
-	
 	Console.prototype.addInlineCommand = function(name, handler) {
 		this._commands.add(name, handler, false);
 	};
 	Console.prototype.addInteractiveCommand = function(name, handler) {
-		this._commands.addInteractiveCommand(name, handler);
+		this._interactiveCommands.addInteractiveCommand(name, handler);
 	};
 	Console.prototype.findSortedCommandsNames = function(name, handler) {
 		var sortedNames = this._commands.getNamesSorted();
@@ -530,7 +536,7 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 	function addLine(self, prompt) {
 		var consoleLine = new ConsoleLine(prompt ? prompt : "");
 		if (prompt) {
-			self._promptLine = consoleLine
+			self._ioLine = consoleLine
 		}
 		var lineDomElt = document.createElement("div");
 		consoleLine.setDomContainer(lineDomElt);
@@ -557,57 +563,48 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
 			if (keyboard.isAlpha(event.keyCode) || keyboard.isSpace(event.keyCode)) {
-				that._promptLine.addChar(event.key);
+				that._ioLine.addChar(event.key);
 			}
-			// NB. while (true) impossible dans la définition d'une commande
-			// donc on fait un peu plus compliqué.
-			// On switch le context d'exécution vers la commande, sort of...
 			else if (keyboard.isEnter(event.keyCode)) {
-				var inputLine = that._promptLine.read();
-				var output = "";
+				var inputLine = that._ioLine.read();
 				
-				// Il n'y pas de commande en cours d'exécution.
-				// On cherche si l'input correspond à une commande existante.
-				if (that._currentCommand === null) {
-					var commandName = inputLine.getFirstToken();
-					var command = that._commands.get(commandName);
-					that._currentCommand = command;
+				// La précédente commande interactive a fini de s'exécuter.
+				if (that._currentInteractiveCommand !== null && that._currentInteractiveCommand.quitted()) {
+					that._currentInteractiveCommand = null;
 				}
 				
-				// Commande inconnue. On récupère la commande par défaut.
-				if (that._currentCommand === null) {
-					that._currentCommand = that._commands.getDefaultCommand();
+				// Pas de commande en cours. On charge une commande.
+				var loadedCommand = null;
+				if (this.isInlineCmd(inputLine)) {
+					loadedCommand = that._commands.get(commandName);
 				}
-	
-				output = that._currentCommand.execute(inputLine);
-				
-				// La commande a terminé son exécution.
-				if (that._currentCommand.isQuittingTime()) {
-					// La console reprend la main. Cf. ce qui se passe quand il n'y a pas
-					// de commande en cours d'exécution.
-					that._currentCommand = null;
-				}
-
-				if (typeof output !== "undefined" && output !== "") {
-					outputLine(that, output);
+				else if (this.isInteractiveCmd(inputLine)) {
+					loadedCommand = that._interactiveCommands.get(commandName);
+					that._currentInteractiveCommand = loadedCommand;
 				}
 				
-				addPromptLine(that);
+				// Si on a réussi à charger une commande à on l'exécute.
+				// Sinon on le signale à l'utilisateur et on attend une nouvelle input. 
+				if (loadedCommand === null) {
+					loadedCommand = getDefaultCommand();
+				}
+				// C'est la commande qui fait ses output.
+				loadedCommand.onInput(inputLine, that._ioLine);
 			}
 			else if (keyboard.isArrowLeft(event.keyCode)) {
-				that._promptLine.moveCursorLeft();
+				that._ioLine.moveCursorLeft();
 			}
 			else if (keyboard.isArrowRight(event.keyCode)) {
-				that._promptLine.moveCursorRight();
+				that._ioLine.moveCursorRight();
 			}
 			else if (keyboard.isBackspace(event.keyCode)) {
-				that._promptLine.removeChar();
+				that._ioLine.removeChar();
 			}
 			else if (keyboard.isEnd(event.keyCode)) {
-				that._promptLine.moveCursorToEnd();
+				that._ioLine.moveCursorToEnd();
 			}
 			else if (keyboard.isHome(event.keyCode)) {
-				that._promptLine.moveCursorToBeginning();
+				that._ioLine.moveCursorToBeginning();
 			}
 		});
 	}

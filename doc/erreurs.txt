@@ -1,0 +1,7 @@
+> A vouloir trop génériser on perd du temps
+
+> while true en JS
+ 
+NB. while (true) impossible dans la définition d'une commande
+donc on fait un peu plus compliqué.
+On switch le context d'exécution vers la commande, sort of...
