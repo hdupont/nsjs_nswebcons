@@ -585,7 +585,8 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 				}
 				
 				// Si on a réussi à charger une commande à on l'exécute.
-				// Sinon on le signale à l'utilisateur et on attend une nouvelle input. 
+				// Sinon on le signale à l'utilisateur (via la commande par défaut)
+				// et on attend une nouvelle input. 
 				if (loadedCommand === null) {
 					loadedCommand = getDefaultCommand();
 				}
