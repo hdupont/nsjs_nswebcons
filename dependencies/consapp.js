@@ -257,9 +257,12 @@ webcons.CommandApi = (function() {
 		return this._cmd.getCmdArgsString(this._inputLine);
 	};
 	CommandApi.prototype.output = function(cmdOutput) {
-		this.outputLine.output(cmdOutput);
+		this._outputLine.output(cmdOutput);
 	};
-	
+	CommandApi.prototype.outputnl = function(cmdOutput) {
+		this._outputLine.output(cmdOutput);
+		this._outputLine.outputnl();
+	};	
 	return CommandApi;
 })();
 
@@ -275,7 +278,7 @@ webcons.Command = (function(CommandApi) {
 		this._handler = handler;
 		this._args = null;
 		this._options = null;
-		this._quittingTime = true;
+		this._quitted = true;
 	}
 	Command.prototype.getName = function() {
 		return this._name;
@@ -295,8 +298,8 @@ webcons.Command = (function(CommandApi) {
 	Command.prototype.isInteractive = function(inputString) {
 		return this._isInteractive;
 	};
-	Command.prototype.isQuittingTime = function() {
-		return this._quittingTime;
+	Command.prototype.quitted = function() {
+		return this._quitted;
 	};
 	Command.prototype.getCmdArgsString = function(inputLine) {
 		inputLine.parseToken();
@@ -352,7 +355,7 @@ webcons.InteractiveCommand = (function(Command) {
 	function InteractiveCommand(name, handler) {
 		Command.call(this, name, handler);
 		this._isFirstExecution = true;
-		this._quittingTime = false;
+		this._quitted = false;
 	}
 	InteractiveCommand.prototype = new Command();
 	
@@ -364,8 +367,8 @@ webcons.InteractiveCommand = (function(Command) {
 		}
 		
 		var firstToken = inputLine.getFirstToken();
-		this._quittingTime = (firstToken === "quit");
-		if (this._quittingTime) {
+		this._quitted = (firstToken === "quit");
+		if (this._quitted) {
 			this._isFirstExecution = true;
 			return "";
 		}
@@ -439,7 +442,7 @@ webcons.CommandInterpreter = (function() {
 // class Console
 // --------------
 // Une Console est un simulacre de console.
-webcons.Console = (function(ConsoleLine, keyboard, Commands) {
+webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 	
 	// public
 	// ------
@@ -484,6 +487,14 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 	};
 	Console.prototype.addInteractiveCommand = function(name, handler) {
 		this._interactiveCommands.addInteractiveCommand(name, handler);
+	};
+	Console.prototype.isInlineCmd = function(name) {
+		var cmd = this._commands.get(name)
+		return cmd != null;
+	};
+	Console.prototype.isInteractiveCmd = function(name) {
+		var cmd = this._currentInteractiveCommand.get(name)
+		return cmd != null;
 	};
 	Console.prototype.findSortedCommandsNames = function(name, handler) {
 		var sortedNames = this._commands.getNamesSorted();
@@ -567,6 +578,7 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 			}
 			else if (keyboard.isEnter(event.keyCode)) {
 				var inputLine = that._ioLine.read();
+				var name = inputLine.getFirstToken();
 				
 				// Il y a une commande interactive en cours mais elle a fini de s'exécuter.
 				// On la "décharge".
@@ -575,23 +587,27 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 				}
 				
 				// Pas de commande en cours. On charge une commande (interactive ou en ligne).
-				var loadedCommand = null;
-				if (this.isInlineCmd(inputLine)) {
-					loadedCommand = that._commands.get(commandName);
+				if (that.isInlineCmd(name)) {
+					loadedCommand = that._commands.get(name);
 				}
 				else if (this.isInteractiveCmd(inputLine)) {
-					loadedCommand = that._interactiveCommands.get(commandName);
+					loadedCommand = that._interactiveCommands.get(name);
 					that._currentInteractiveCommand = loadedCommand;
 				}
 				
-				// Si on a réussi à charger une commande on l'exécute.
-				// Sinon on le signale à l'utilisateur (via la commande par défaut)
-				// et on attend une nouvelle input. 
+				// Si on n'a pas réussi à charger une commande on l'exécute.
 				if (loadedCommand === null) {
 					loadedCommand = getDefaultCommand();
 				}
+				
 				// C'est la commande qui fait ses output.
 				loadedCommand.onInput(inputLine, that._ioLine);
+				
+				if (loadedCommand.quitted()) {
+					that._currentInteractiveCommand = null;
+					var cmdApi = new CommandApi(null, null, that._ioLine);
+					cmdApi.outputnl("toto");
+				}
 			}
 			else if (keyboard.isArrowLeft(event.keyCode)) {
 				that._ioLine.moveCursorLeft();
@@ -612,7 +628,7 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 	}
 
 	return Console;
-})(webcons.ConsoleLine, webcons.utils.keyboard, webcons.Commands);
+})(webcons.ConsoleLine, webcons.utils.keyboard, webcons.Commands, webcons.CommandApi);
 
 // API
 // TODO faire que webcons utilise webconns, avec ns = namespace pour plus de clareté.

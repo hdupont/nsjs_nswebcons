@@ -1,3 +1,4 @@
 nscon.cmds.inline.calc = function(api) {
-	return nscon.helpers.calcExpr(api.cmdArgsString());
+	var res = nscon.helpers.calcExpr(api.cmdArgsString());
+	api.output(res);
 }
