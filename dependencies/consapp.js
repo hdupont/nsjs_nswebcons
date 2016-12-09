@@ -568,7 +568,8 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 			else if (keyboard.isEnter(event.keyCode)) {
 				var inputLine = that._ioLine.read();
 				
-				// La précédente commande interactive a fini de s'exécuter.
+				// Il y a une commande interactive en cours mais elle a fini de s'exécuter.
+				// On la "décharge".
 				if (that._currentInteractiveCommand !== null && that._currentInteractiveCommand.quitted()) {
 					that._currentInteractiveCommand = null;
 				}
