@@ -574,7 +574,7 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands) {
 					that._currentInteractiveCommand = null;
 				}
 				
-				// Pas de commande en cours. On charge une commande.
+				// Pas de commande en cours. On charge une commande (interactive ou en ligne).
 				var loadedCommand = null;
 				if (this.isInlineCmd(inputLine)) {
 					loadedCommand = that._commands.get(commandName);
