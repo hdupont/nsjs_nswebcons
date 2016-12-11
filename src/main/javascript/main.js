@@ -1,7 +1,7 @@
 // Where the magic happens.
-(function(cmds, webcons) {
+(function(cmds, wcons) {
 	
-	var cons = webcons.appendTo("calcapp");
+	var cons = wcons.appendTo("calcapp");
 	
 	for (var cmdName in cmds.interactive) {
 		cons.addInteractiveCommand(cmdName, cmds.interactive[cmdName]);
@@ -11,4 +11,4 @@
 		cons.addInlineCommand(cmdName, cmds.inline[cmdName]);
 	}
 
-})(nscon.cmds, webcons);
+})(nscon.cmds, h_wcons);
