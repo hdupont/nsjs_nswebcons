@@ -11,7 +11,4 @@
 		cons.addInlineCommand(cmdName, cmds.inline[cmdName]);
 	}
 
-	cons.addInlineCommand("calc", function(api) {
-		return calc(api.cmdArgsString());
-	});
 })(nscon.cmds, webcons);

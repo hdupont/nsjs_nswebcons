@@ -13,3 +13,8 @@ onInput(input) {
 
 Pour faire ses outuput la commande a besoin de creer des ligne d'output.
 Donc c'est a deplacer de la console dans la commande.
+
+La console met à dispositoin (de ses clients les commandes):
+- une ligne de lecture
+- la gestion du curseur
+- une output

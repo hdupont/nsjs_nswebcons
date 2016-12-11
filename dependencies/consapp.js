@@ -10,9 +10,15 @@ webcons.utils = {};
 // Utilitaire de gestion du clavier.
 webcons.utils.keyboard = (function() {
 	return {
+		isVisibleChar: function(code) {
+			return (33 <= code && code <= 126);
+		},
 		isAlpha: function(code) {
 			return (65 <= code && code <= 90)   // Majuscule.
 				|| (97 <= code && code <= 122); // Minuscule.
+		},
+		isDigit: function(code) {
+			return (48 <= code && code <= 57);
 		},
 		isSpace: function(code) {
 			return code === 32;
@@ -37,6 +43,125 @@ webcons.utils.keyboard = (function() {
 		}
 	};
 })();
+
+webcons.utils.dom = (function() {
+	return {
+		prepend: function(referenceNode, nodeToPrepend) {
+			referenceNode.parentNode.insertBefore(nodeToPrepend, referenceNode)
+		}
+	};
+})();
+
+webcons.utils.parse = (function() {
+	return {
+		/**
+		 * Retourne l'indice du premier caractère qui ne soit pas un espace
+		 * dans la chaine str, en commençant la recherche à partir de l'indice
+		 * start.
+		 * @param {string} str La chaine dans laquelle on veut effectuer
+		 * recherche.
+		 * @param {int} start L'indice à partir duquel on veut effectuer
+		 * la recherche.
+		 * @returns {int} L'indice du premier caractère qui ne soit pas un
+		 * espace, en commençant la recherche à partir de l'indice start.
+		 */
+		skipSpaces: function(str, start) {
+			if (start > str.length - 1) {
+				throw new Error("skipSpaces - start > str.length - 1");
+			}
+			var index = start;
+			while (str[index] === " " && index < str.length) {
+				index++;
+			}
+			return index;
+		},
+		/**
+		 * Retourne l'indice du premier espace dans la chaine str, en
+		 * commençant la recherche à partir de l'indice start.
+		 * @param {string} str La chaine dans laquelle on veut effectuer
+		 * recherche.
+		 * @param {int} start L'indice à partir duquel on veut effectuer la
+		 * recherche.
+		 * @returns {int} L'indice du premier espace, en commençant la
+		 * recherche à partir de l'indice start.
+		 */
+		skipNonSpaces: function(str, start) {
+			if (start > str.length - 1) {
+				throw new Error("skipNonSpaces - start > str.length - 1");
+			}
+			var index = start;
+			while (str[index] !== " " && index < str.length) {
+				index++;
+			}
+			return index;
+		},
+		/**
+		 * Retourne le premier token trouvé à partir de start.
+		 * @param {string} str La chaine dans laquelle on veut effectuer
+		 * recherche.
+		 * @param {int} start L'indice à partir duquel on veut effectuer la
+		 * recherche.
+		 * @returns {string} Le premier token trouvé à partir de start.
+		 */
+		peekToken: function(str, start) {
+			if (start > str.length - 1) {
+				throw new Error("peekToken - start > str.length - 1");
+			}
+			var index = start;
+			this.skipSpaces(str, index);
+			var token = "";
+			while (str[index] !== " " && index < str.length) {
+				token += str[index];
+				index++;
+			}
+			return token;
+		},
+		findTokenIndex: function(str, index, start) {
+			var nonSpace = start;
+			var space = start;
+			for(var i = 0; i < index; i++) {
+				nonSpace = this.skipSpaces(str, space);
+				space = this.skipNonSpaces(str, nonSpace);
+			}
+			
+			var firstTokenCharIndex = nonSpace;
+			return firstTokenCharIndex;
+		},
+		findToken: function(str, index, start) {
+			var firstTokenCharIndex = this.findTokenIndex(str, index, start);
+			var token = this.peekToken(str, firstTokenCharIndex);
+			return token;
+		},
+		peekAfterToken: function(str, index) {
+			var firstTokenCharIndex = this.findTokenIndex(str, index + 1, 0);
+			return str.slice(firstTokenCharIndex);
+		}
+	};
+})();
+
+webcons.Input = (function(parseTk) {
+	
+	function Input(str) {
+		this._str = str;
+	}
+	Input.prototype.peekAfterToken = function(index) {
+		return parseTk.peekAfterToken(this._str, index);
+	};
+	Input.prototype.findToken = function(index, start) {
+		return parseTk.findToken(this._str, index, start);
+	};
+	Input.prototype.readToken = function() {
+		var token = this.peekToken(0);
+		var index = parseTk.skipSpaces(this._str, token.length);
+		this._str = this._str.slice(index);
+		return token;
+	};
+	Input.prototype.toString = function() {
+		return this._str;
+	};
+
+	return Input;
+})(webcons.utils.parse);
 
 // ---------------
 // class Character
@@ -74,12 +199,11 @@ webcons.LineDomView = (function() {
 	
 	function LineDomView(domElt) {
 		this._domContainer = domElt;
-	}
-	LineDomView.prototype.updateLine = function(consLine) {
-		var chars = consLine._chars;
-		var cursorIndex = consLine._cursorIndex;
+		this._prefix = "";
 		
-		this._domContainer.innerHTML = consLine._stringToPrepend ? consLine._stringToPrepend : "";
+	}
+	LineDomView.prototype.updateLine = function(chars, cursorIndex, prefix) {
+		this._domContainer.innerHTML = prefix ? prefix : "";
 		
 		var self = this;
 		chars.forEach(function(consChar, index) {
@@ -87,11 +211,15 @@ webcons.LineDomView = (function() {
 			if (c === "" || c === " ") {
 				c = "&nbsp";
 			}
-			domElt = buildCharDomElt(self, c, index === cursorIndex && consLine._stringToPrepend);
+			domElt = buildCharDomElt(self, c, index === cursorIndex);
 			self._domContainer.appendChild(domElt);
 		});
 		this._domContainer.scrollIntoView();
 		
+	};
+	LineDomView.prototype.addChar = function(c) {
+		var domElt = buildCharDomElt(self, c);
+		this._domContainer.appendChild(domElt);
 	};
 	LineDomView.prototype.removeCursor = function(cursorPosition) {
 		this._domContainer.children[cursorPosition].style.backgroundColor = "";
@@ -117,90 +245,66 @@ webcons.LineDomView = (function() {
 	return LineDomView;
 })();
 
-webcons.InputLine = (function() {
-	
-	// public
-	// ------
-	
-	function InputLine(line) {
-		this._line = line;
-	}
-	InputLine.createInputLine = function(line) {
-		return new InputLine(line);
-	};
-	InputLine.prototype.getFirstToken = function() {
-		return this._line.split(" ")[0];
-	};
-	InputLine.prototype.parseArgs = function() {
-		return this._line.split(" ").map(function(x) {
-			return x.trim();
-		});
-	};
-	InputLine.prototype.getInputString = function() {
-		return this._line;
-	};
-	InputLine.prototype.parseToken = function() {
-		var firstSpace = this._line.indexOf(" ");
-		this._line = this._line.substring(firstSpace+1);
-		return this._line;
-	};
-	
-	return InputLine;
-})();
-
 // -----------------
 // class ConsoleLine
 // -----------------
 // Une ConsoleLine est une ligne de la console.
-webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
+// Elle gère le curseuret, affiche des caractère et lit ce qui a été affiché
+// entre deux pression de la touche "Entrée".
+webcons.ConsoleLine = (function(Character, LineDomView, domTk, parseTk) {
 	
 	// public
 	// ------
 	
-	function ConsoleLine(stringToPrepend) {
+	function ConsoleLine(prefix) {
 		var eol = Character.createEolChar();
 		
 		this._chars = [eol];
 		this._cursorIndex = 0; // Pointe sur eol.
-		this._stringToPrepend = stringToPrepend ? stringToPrepend : "";
+		this._prefix = prefix ? prefix : "";
 		this._domView = null;
+		this._consoleDomElement = null;
 	}
-	ConsoleLine.prototype.setDomContainer = function(domContainer) {
-		this._domView = new LineDomView(domContainer);
-		this._domView.updateLine(this);
+	ConsoleLine.prototype.addInputChar = function(character) {
+		addChar(this, character);
+		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.addChar = function(character) {
-		this._chars.splice(this._cursorIndex, 0, new Character(character));
-		this._cursorIndex++;
-		this._domView.updateLine(this);
+	ConsoleLine.prototype.addOutputChar = function(character) {
+		addChar(this, character);
+		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.read = function() {
-		this._domView.removeCursor(this._cursorIndex);
+	ConsoleLine.prototype.readLine = function() {	
 		var str = this._chars.map(function(consChar) {
 			return consChar.getChar();
 		}).join("");
 		
-		return new InputLine(str)
+		return str;
 	};
-	ConsoleLine.prototype.output = function(content) {
+	ConsoleLine.prototype.print = function(str) {
 		clearChars(this);
-		for (var i = 0; i < content.length; i++) {
-			this.addChar(content[i]);
+		var chars = [Character.createEolChar()];
+		for (var i = 0; i < str.length; i++) {
+			var char = str[i];
+			this.addOutputChar(char);
 		}
+	};
+	ConsoleLine.prototype.println = function(str) {
+		this.print(str);
+		this.moveForward();
 	};
 	ConsoleLine.prototype.moveCursorLeft = function() {
 		if (this._cursorIndex === 0) {
 			return;
 		}
 		this._cursorIndex--;
-		this._domView.updateLine(this);
+		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.moveCursorRight = function() {
 		if (this._cursorIndex === this._chars.length - 1) {
 			return;
 		}
 		this._cursorIndex++;
-		this._domView.updateLine(this);
+		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.removeChar = function() {
 		if (this._cursorIndex === 0) {
@@ -208,15 +312,30 @@ webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
 		}
 		this._chars.splice(this._cursorIndex - 1, 1);
 		this._cursorIndex--;
-		this._domView.updateLine(this);
+		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.moveCursorToEnd = function() {
 		this._cursorIndex = this._chars.length - 1;
-		this._domView.updateLine(this);
+		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.moveCursorToBeginning = function() {
 		this._cursorIndex = 0;
 		this._domView.updateLine(this);
+	};
+	// Abandonne son contenu et avance
+	ConsoleLine.prototype.moveForward = function() {
+		var prevCursorPosition = this._cursorIndex;
+		clearChars(this);
+		this._prefix = "";
+		addNewDomView(this, prevCursorPosition);
+	};
+	ConsoleLine.prototype.appendTo = function(consoleNode) {
+		this._consoleDomElement = consoleNode;
+		addNewDomView(this);
+	};
+	ConsoleLine.prototype.setTransientPrefix = function(str) {
+		this._prefix = str;
+		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.onCursorUpdate = function(character) {
 		// TODO
@@ -228,42 +347,102 @@ webcons.ConsoleLine = (function(Character, LineDomView, InputLine) {
 	// -------
 	
 	function clearChars(self) {
-		while(self.length > 1) {
+		while(self._chars.length > 1) {
 			self._chars.shift();
 		}
+		self._cursorIndex = 0
+	}
+	
+	function addChar(self, character) {
+		self._chars.splice(self._cursorIndex, 0, new Character(character));
+		self._cursorIndex++;
+	};
+	
+	function updateWithInputChars(self) {
+		self._domView.updateLine(self._chars, self._cursorIndex, self._prefix);
+	}
+
+	function updateWithOutputChars(chars) {
+		self._domView.updateLine(chars, self._cursorIndex, "");
+	}
+	
+	function addNewDomView(self, cursorPosition) {
+		if (self._consoleDomElement === null || typeof self._consoleDomElement === "undefined") {
+			throw new Error('consoleDomElement === null || typeof consoleDomElement === "undefined"');
+		}
+		
+		// On retire le curseur de la ligne actuelle qui va devenir la ligne précédente.
+		if (self._domView) {
+			self._domView.removeCursor(cursorPosition);	
+		}
+		
+		var lineDomElt = document.createElement("div");
+		lineDomElt.setAttribute("kind", "iolineview")
+		self._domView = new LineDomView(lineDomElt);
+		self._consoleDomElement.appendChild(lineDomElt);
+		updateWithInputChars(self);
 	}
 	
 	return ConsoleLine;	
-})(webcons.Character, webcons.LineDomView, webcons.InputLine);
+})(webcons.Character, webcons.LineDomView, webcons.utils.dom, webcons.utils.parse);
+
+webcons.CommandExitException = (function() {
+	
+	function CommandExitException(message) {
+	    this.message = message;
+	}
+	
+	return CommandExitException;
+})();
 
 //----------------
 //class CommandApi
 //----------------
 //Une CommandApi est l'API utilisable par une commande.
-webcons.CommandApi = (function() {
-	function CommandApi(cmd, inputLine, outputLine) {
+webcons.CommandApi = (function(parseTk, CommandExitException) {
+	function CommandApi(cmd, input, ioLine) {
 		this._cmd = cmd;
-		this._inputLine = inputLine;
-		this._outputLine = outputLine;
+		this._input = input;
+		this._ioLine = ioLine;
 	}
-	/**
-	 *  Retourne ce qui suit le nom de la commande sous forme de string,
-	 *  en supprimant les espaces au début et à la fin.
-	 *  Par exemple, pour la commande cmd suivante
-	 *  > cmd    ab c d   
-	 *  getStringParam retournera "ab c d"
-	 */
-	CommandApi.prototype.cmdArgsString = function() {
-		return this._cmd.getCmdArgsString(this._inputLine);
+	CommandApi.prototype.print = function(cmdOutput) {
+		this._ioLine.print(cmdOutput);
 	};
-	CommandApi.prototype.output = function(cmdOutput) {
-		this._outputLine.output(cmdOutput);
+	CommandApi.prototype.println = function(cmdOutput) {
+		this._ioLine.println(cmdOutput);
 	};
-	CommandApi.prototype.outputnl = function(cmdOutput) {
-		this._outputLine.output(cmdOutput);
-		this._outputLine.outputnl();
-	};	
+	CommandApi.prototype.input = function() {
+		return this._input;
+	};
+	CommandApi.prototype.args = function() {
+		// On saute le premier token qui est le prompt, d'où le 1.
+		return this._input.peekAfterToken(1);
+	};
+	CommandApi.prototype.peekInputAfterToken = function(index) {
+		return this._input.peekAfterToken(index);
+	}
+	CommandApi.prototype.inlineCmdArgsString = function(index) {
+		// On saute les deux premiers tokens. Le premier token est le prompt
+		// et le deuxième token est le nom de la commande, d'où le 2.
+		return this._input.peekAfterToken(2); 
+	}
+	CommandApi.prototype.exit = function() {
+		throw new CommandExitException("Argument cannot be less than zero");
+	}
 	return CommandApi;
+})(webcons.utils.parse, webcons.CommandExitException);
+
+// Dans une commande self représente la commande.
+webcons.defaultInlineCommands = (function() {
+	var defCmds = this;
+	return {
+		"echo": function(api) {
+			api.println(api.inlineCmdArgsString());
+		},
+		"wtf": function(api) {
+			return api.println(api.args() + "... WTF?!");
+		}
+	};
 })();
 
 //-------------
@@ -271,8 +450,9 @@ webcons.CommandApi = (function() {
 //-------------
 // Une Command est une commande que la console peut exécuter.
 // Il y a deux types de commandes.
-webcons.Command = (function(CommandApi) {
+webcons.Command = (function(CommandApi, CommandExitException) {
 	
+	// TODO supprimer le paramètre isInteractive
 	function Command(name, handler, isInteractive) {
 		this._name = name;
 		this._handler = handler;
@@ -283,8 +463,21 @@ webcons.Command = (function(CommandApi) {
 	Command.prototype.getName = function() {
 		return this._name;
 	};
-	Command.prototype.onInput = function(inputLine, outputLine) {
-		return this._handler(new CommandApi(this, inputLine, outputLine));
+	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
+	Command.prototype.onInput = function(input, ioLine) {
+		var api = new CommandApi(this, input, ioLine);
+		try {
+			this.execute(api);
+		}
+		catch(e) {
+			if (e instanceof CommandExitException) {
+				this._quitted = true;
+				console.log(e);
+			}
+		}
+	};
+	Command.prototype.execute = function(api) {
+		this._handler(api);
 	};
 	Command.prototype.setArgs = function(args) {
 		return this._args = args;
@@ -300,10 +493,6 @@ webcons.Command = (function(CommandApi) {
 	};
 	Command.prototype.quitted = function() {
 		return this._quitted;
-	};
-	Command.prototype.getCmdArgsString = function(inputLine) {
-		inputLine.parseToken();
-		return inputLine.getInputString();
 	};
 	
 	function getOption(self, optionName) {
@@ -324,7 +513,7 @@ webcons.Command = (function(CommandApi) {
 	}
 	
 	return Command;
-})(webcons.CommandApi);
+})(webcons.CommandApi, webcons.CommandExitException);
 
 //-------------------
 //class InlineCommand
@@ -359,27 +548,25 @@ webcons.InteractiveCommand = (function(Command) {
 	}
 	InteractiveCommand.prototype = new Command();
 	
-	InteractiveCommand.prototype.onInput = function(inputLine) {
-		if (this._isFirstExecution) {
-			this._isFirstExecution = false;
-			this._quittingTime = false;
-			return this.getIntroduction();
-		}
-		
-		var firstToken = inputLine.getFirstToken();
-		this._quitted = (firstToken === "quit");
-		if (this._quitted) {
-			this._isFirstExecution = true;
-			return "";
-		}
-		else {
-			res = Command.prototype.execute.call(this, inputLine); 
-		}
-		
-		return res;
+	InteractiveCommand.prototype.getPrompt = function(api) {
+		return this.getName() + "> ";
 	};
-	InteractiveCommand.prototype.getCmdArgsString = function(inputLine) {
-		return inputLine.getInputString();
+	InteractiveCommand.prototype.execute = function(api) {
+		// Si c'est la première exécution, on affiche le message de bienvenue
+		// et on s'en retourne.
+		if (this._isFirstExecution || this._quitted) {
+			this._isFirstExecution = false;
+			this._quitted = false;
+			api.println(this.getIntroduction());
+			api.print(this.getPrompt());
+			return;
+		}
+		
+		this._handler(api);
+		api.print(this.getPrompt());
+	};
+	InteractiveCommand.prototype.getCmdArgsString = function(input) {
+		return input.getInputString();
 	};
 	
 	return InteractiveCommand;
@@ -387,8 +574,13 @@ webcons.InteractiveCommand = (function(Command) {
 
 webcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	
-	function Commands() {
+	function Commands(defaultInlineCommands) {
 		this._commands = [];
+		
+		var self = this;
+		for (var cmdName in defaultInlineCommands) {
+			self.add(cmdName, defaultInlineCommands[cmdName]);
+		}
 	}
 	Commands.prototype.add = function(name, handler) {
 		var inlineCmd = new InlineCommand(name, handler);
@@ -411,7 +603,7 @@ webcons.Commands = (function(InlineCommand, InteractiveCommand) {
 		return res;
 	};
 	Commands.prototype.getDefaultCommand = function() {
-		return _wtfCommand;
+		return this.get("wtf");
 	};
 	Commands.prototype.getNamesSorted = function(fun) {
 		var sortedNames = [];
@@ -421,10 +613,6 @@ webcons.Commands = (function(InlineCommand, InteractiveCommand) {
 		sortedNames.sort();
 		return sortedNames;
 	};
-	
-	var _wtfCommand = new InlineCommand("wtf", function(api) {
-		return api.cmdArgsString() + "... WTF?!";
-	});
 	
 	return Commands;
 })(webcons.InlineCommand, webcons.InteractiveCommand);
@@ -442,36 +630,36 @@ webcons.CommandInterpreter = (function() {
 // class Console
 // --------------
 // Une Console est un simulacre de console.
-webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
+webcons.Console = (function(keyboard, Commands, CommandApi, Input, defaultInlineCommands) {
 	
 	// public
 	// ------
 
-	function Console() {
+	function Console(ioLine) {
 		this._domElt = null; // Un singleton.
-		this._commands = new Commands();
-		//WIP La console gère deux types de commande: inline et interactive
+		this._commands = new Commands(defaultInlineCommands);
 		this._interactiveCommands = new Commands();
-		this._ioLine = null;
 		this._currentCommand = null;
 		this._currentInteractiveCommand = null;
-		this._prompt = "console> ";
+		this._prompt = "wc>";
+		this._ioLine = ioLine;
+		this._input = null;
 	}
 	
 	Console.prototype.getDomElt = function() {
 		if (this._domElt !== null) {
 			return this._domElt;
 		}
-		
-		// On créer l'élément dom de la console
+
 		this._domElt = buildJConsoleDomElt(this);
-		
-		// On lui ajoute une ligne
-		addPromptLine(this);
+		this._ioLine.appendTo(this._domElt);
 		
 		addKeyboadListener(this);
 		
 		return this._domElt;
+	};
+	Console.prototype.printPrompt = function() {
+		this._ioLine.print(this._prompt + " ");
 	};
 	Console.prototype.moveCursorLeft = function() {
 		this._ioLine.moveLeft();
@@ -481,6 +669,12 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 	};
 	Console.prototype.deleteCharFromLine = function() {
 		this._ioLine.deleteChar();
+	};
+	Console.prototype.print = function(str) {
+		this._ioLine.print(str);
+	};
+	Console.prototype.println = function(str) {
+		this._ioLine.println(str);
 	};
 	Console.prototype.addInlineCommand = function(name, handler) {
 		this._commands.add(name, handler, false);
@@ -493,8 +687,8 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 		return cmd != null;
 	};
 	Console.prototype.isInteractiveCmd = function(name) {
-		var cmd = this._currentInteractiveCommand.get(name)
-		return cmd != null;
+		var cmd = this._interactiveCommands.get(name);
+		return cmd;
 	};
 	Console.prototype.findSortedCommandsNames = function(name, handler) {
 		var sortedNames = this._commands.getNamesSorted();
@@ -508,15 +702,6 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 	};
 	Console.prototype.loadDefaultInlineCommands = function() {
 		var self = this;
-		var defaultInlineCommands =  {
-			"echo": function(api) {
-				return api.cmdArgsString();
-			},
-			"help": function(api) {
-				// TODO Commands_1 mettre dans l'api et déplacer dans Commands
-				return self.findSortedCommandsNames();
-			}
-		};
 		
 		for (var cmdName in defaultInlineCommands) {
 			this.addInlineCommand(cmdName, defaultInlineCommands[cmdName]);
@@ -526,36 +711,6 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 	// private
 	// -------
 	
-	function getPrompt(self) {
-		var promptName = ""
-	
-		if (self._currentCommand === null) {
-			promptName = "console";
-		}
-		else {
-			promptName =  self._currentCommand.getName()
-		}
-		return (promptName + "> ");
-	}
-	function outputLine(self, content) {
-		var line = addLine(self);
-		line.output(content);
-	}
-	function addPromptLine(self) {
-		return addLine(self, getPrompt(self));
-	}
-	function addLine(self, prompt) {
-		var consoleLine = new ConsoleLine(prompt ? prompt : "");
-		if (prompt) {
-			self._ioLine = consoleLine
-		}
-		var lineDomElt = document.createElement("div");
-		consoleLine.setDomContainer(lineDomElt);
-		
-		self._domElt.appendChild(lineDomElt);
-		
-		return consoleLine;
-	}
 	function buildJConsoleDomElt(that) {
 		var outputElt = document.createElement("div");
 		outputElt.setAttribute("id", "webcons");
@@ -573,40 +728,52 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 	}
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
-			if (keyboard.isAlpha(event.keyCode) || keyboard.isSpace(event.keyCode)) {
-				that._ioLine.addChar(event.key);
+			if (keyboard.isVisibleChar(event.keyCode) || keyboard.isSpace(event.keyCode)) {
+				that._ioLine.addInputChar(event.key);
 			}
 			else if (keyboard.isEnter(event.keyCode)) {
-				var inputLine = that._ioLine.read();
-				var name = inputLine.getFirstToken();
+				// TODO coder l'help ici (à l'intérieur de ce handler).
 				
+				var inputStr = that._ioLine.readLine();
+				var input = new Input(inputStr);
+				var cmdName = input.findToken(1, that._prompt.length); // Le premier étant le prompt.
+				that._ioLine.moveForward();
+				
+				var loadedCommand = null;
 				// Il y a une commande interactive en cours mais elle a fini de s'exécuter.
 				// On la "décharge".
 				if (that._currentInteractiveCommand !== null && that._currentInteractiveCommand.quitted()) {
 					that._currentInteractiveCommand = null;
 				}
-				
-				// Pas de commande en cours. On charge une commande (interactive ou en ligne).
-				if (that.isInlineCmd(name)) {
-					loadedCommand = that._commands.get(name);
-				}
-				else if (this.isInteractiveCmd(inputLine)) {
-					loadedCommand = that._interactiveCommands.get(name);
-					that._currentInteractiveCommand = loadedCommand;
+				else {
+					loadedCommand = that._currentInteractiveCommand;
 				}
 				
+				// Pas de commande en cours. On essaie de charger une commande (interactive ou en ligne).
+				if (loadedCommand === null) {
+					if (that.isInlineCmd(cmdName)) {
+						loadedCommand = that._commands.get(cmdName);
+					}
+					else if (that.isInteractiveCmd(cmdName)) {
+						loadedCommand = that._interactiveCommands.get(cmdName);
+						that._currentInteractiveCommand = loadedCommand;
+					}
+				}
+
 				// Si on n'a pas réussi à charger une commande on l'exécute.
 				if (loadedCommand === null) {
-					loadedCommand = getDefaultCommand();
+					loadedCommand = that._commands.getDefaultCommand();
 				}
 				
 				// C'est la commande qui fait ses output.
-				loadedCommand.onInput(inputLine, that._ioLine);
+				// Elle prend la main sur la ioLine.
+				loadedCommand.onInput(input, that._ioLine);
 				
 				if (loadedCommand.quitted()) {
 					that._currentInteractiveCommand = null;
-					var cmdApi = new CommandApi(null, null, that._ioLine);
-					cmdApi.outputnl("toto");
+					var cmdApi = new CommandApi(null, input, that._ioLine);
+					cmdApi.println(loadedCommand.getName() + " quitted...");
+					that.printPrompt();
 				}
 			}
 			else if (keyboard.isArrowLeft(event.keyCode)) {
@@ -628,21 +795,23 @@ webcons.Console = (function(ConsoleLine, keyboard, Commands, CommandApi) {
 	}
 
 	return Console;
-})(webcons.ConsoleLine, webcons.utils.keyboard, webcons.Commands, webcons.CommandApi);
+})(webcons.utils.keyboard, webcons.Commands, webcons.CommandApi, webcons.Input, webcons.defaultInlineCommands);
 
 // API
 // TODO faire que webcons utilise webconns, avec ns = namespace pour plus de clareté.
 // })(webconns.Console, webcons);
-webcons = (function(Console) {
+webcons = (function(Console, ConsoleLine) {
 	return {
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
 		appendTo: function(id) {
-			var jcons = new Console();	
-			jcons.loadDefaultInlineCommands();
+			var ioLine = new ConsoleLine();
+			
+			var jcons = new Console(ioLine);
 			jconsDomElt = jcons.getDomElt();
+			jcons.printPrompt();
 			
 			var container = document.getElementById(id);
 			container.appendChild(jconsDomElt);
@@ -652,4 +821,4 @@ webcons = (function(Console) {
 			return jcons;
 		}
 	}
-})(webcons.Console);
+})(webcons.Console, webcons.ConsoleLine);
