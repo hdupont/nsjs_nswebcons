@@ -1,0 +1,39 @@
+> Transformation en mode TDD d'un objet globale en classe
+
+D'abord créer une classe (du nom de la classe de remplacement) vide dans le même fichier et faire un console.log dans le constructeur.
+Tester console.log ok (la classe est bien utilisable).
+Ajouter les attributs et les méthodes composants l'interface publique et les éléments privés.
+Tester (tout compile, on a rien cassé).
+Remplacer l'objet global utilisé dans l'utilisateur par un objet créé à partir de la nouvelle classe.
+Tester.
+"Ajuster."
+Tester.  
+
+> Transformation d'un handler (une fonction) en action
+
+On sépare son nom de son code
+
+Le handler
+
+<code>
+// Arrête le chrono.
+function stopChrono() {
+	self._chrono.stop();
+	self._ui.switchToStopState();
+}
+</code>
+
+devient l'action
+
+<code>
+// Arrête le chrono.
+{
+	name: "stopchrono",
+	handler: function stopChrono() {
+		self._chrono.stop();
+		self._ui.switchToStopState();
+	}
+}
+</code>
+
+Ce qui en fait une action c'est qu'elle est regroupée avec un ensemble d'élement qui son sémantiquement des actions dans la conception.
