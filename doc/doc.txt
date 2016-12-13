@@ -6,8 +6,91 @@ Le nom du fichier contenant le namespace est le meme que le namespace.
 Chaque dossier contient un fichier du meme nom.
 Ce fichier contient le namespace de l'abstraction a laquelle correspond le dossier.
 
-> Conventions de nommage
+> Conventions de nommage du namespace
 
-Un nom de fichier commencant par "cl_" contient une "classe".
-Le nom des classes est précédé de "H_" pour éviter les conflits.
-Par exemple, le fichier cl_h_oneopcalculator.js. contient la classe H_OneOpCalculator.
+Dans un fichier, un namespace au premier niveau est précédé de "h_" pour éviter
+les collisions avec d'autre bibliothèques.
+
+> Conventions de nommage des fonctions, méthodes et attributs
+
+Le nom d'une fonction, d'une méthode ou d'un attribut privé est préfixé par un underscore ("_").
+Sauf s'il s'agit d'une fonction définie à l'intérieur d'une fonction.
+Sauf s'il s'agit d'une IIFE utilisée à des fins d'organisation de code (cf. Organisation d'un fichier de "classe").
+
+> Organisation d'un fichier de "classe"
+
+L'organisation d'un fichier est illustré en utilisant l'exemple d'une classe Machin.
+
+# Un namespace.
+
+<almostcode>
+var h_machin = {} // Le namespace.
+</almostcode>
+
+# Une IIFE retournant le constructeur dans le namespace.
+
+<almostcode>
+h_machin.Machin = (function(){ // La IIFE
+	function Machin(...) {...}
+	...
+	return Machin;
+})();
+</almostcode>
+
+NOTE IIFE pour "Immediately Invoked Function Expression"
+
+REF https://developer.mozilla.org/en-US/docs/Glossary/IIFE
+
+# Les dépendances passer en arguments de la IIFE et renommées dans le corps de la IIFE pour plus de lisibilité.
+
+<almostcode>
+h_machin.Machin = (function(bidule, truc, ...){
+	function Machin(...) {...}
+	...
+	return Machin;
+})(dependance_bidule, dependance_truc, ...);
+</almostcode>
+
+# On regroupe ensemble dans une section dédiées du fichiers les éléments publics et privés.
+Les sections ont pour nom "public" et "private"
+
+<almostcode>
+h_machin.Machin = (function(bidule, truc, ...){
+
+	// public
+	// ------
+
+	function Machin(...) {...}
+	Machin.prototype.f = function() {...}
+	
+	... le code public...
+
+	// private
+	// --------
+	
+	... le code privé...
+	
+	return Machin;
+})(dependance_bidule, dependance_truc, ...);
+</almostcode>
+
+> Documentation
+
+La documentation est constituée principalement des commentaires.
+Si un point a besoin de précision, on ajoute une NOTE.
+IDEE Pour extraire une doc du code. Faire un grep des NOTEs accompagnée de la première ligne qui n'est pas un commentaire.
+En plus des commentaire, le documentation est complété des NOTE
+
+> Commentaire
+
+On peut faire des grep dessus.
+
+TODO Quelque chose à faire.
+URGENT Quelque chose à faire urgemment
+NOTE Pour attirer l'attention du lecteur sur une précision.
+WIP Indique à la fois qu'une portion de code en cours de travaux mais aussi la nature des travaux.
+REF Indique une référence à de la documentation externe.
+
+> Vocabulaire
+
+Valorise Un setter valorise un attribut.
