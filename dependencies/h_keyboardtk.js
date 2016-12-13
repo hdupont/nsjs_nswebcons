@@ -1,8 +1,8 @@
 // Utilitaire de gestion du clavier.
 var h_keyboardtk = (function() {
 	return {
-		isVisibleChar: function(code) {
-			return (33 <= code && code <= 126);
+		isVisibleChar: function(code, key) {
+			return (key.length === 1) && (33 <= code && code <= 126);
 		},
 		isAlpha: function(code) {
 			return (65 <= code && code <= 90)   // Majuscule.

@@ -593,7 +593,7 @@ h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInline
 	}
 	function addKeyboadListener(that) {
 		that._domElt.addEventListener("keydown", function(event) {
-			if (keyboard.isVisibleChar(event.keyCode) || keyboard.isSpace(event.keyCode)) {
+			if (keyboard.isVisibleChar(event.keyCode, event.key) || keyboard.isSpace(event.keyCode)) {
 				that._ioLine.addInputChar(event.key);
 			}
 			else if (keyboard.isEnter(event.keyCode)) {
