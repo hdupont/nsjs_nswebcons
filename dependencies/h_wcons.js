@@ -88,18 +88,18 @@ h_wcons.Command = (function(CommandApi, CommandExitException) {
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
 	Command.prototype.onInput = function(input, ioLine) {
 		var api = new CommandApi(this, input, ioLine);
-//		try {
+		try {
 			this.execute(api);
-//		}
-//		catch(e) {
-//			if (e instanceof CommandExitException) {
-//				this._quitted = true;
-//				console.log(e);
-//			}
-//			else {
-//				throw e;
-//			}
-//		}
+		}
+		catch(e) {
+			if (e instanceof CommandExitException) {
+				this._quitted = true;
+				console.log(e);
+			}
+			else {
+				throw e;
+			}
+		}
 	};
 	Command.prototype.execute = function(api) {
 		this._handler(api);
