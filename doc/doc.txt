@@ -91,6 +91,14 @@ NOTE Pour attirer l'attention du lecteur sur une précision.
 WIP Indique à la fois qu'une portion de code en cours de travaux mais aussi la nature des travaux.
 REF Indique une référence à de la documentation externe.
 
+> Commit
+
+Doc
+Un commit ayant ajouté de la documentation
+
+Corr: xxx
+Un commit corrigeant le bug xxx, où xxx est le numéro d'un bug ou une description d'un bug. 
+
 > Vocabulaire
 
 Valorise Un setter valorise un attribut.
