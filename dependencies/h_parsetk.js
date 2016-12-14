@@ -99,14 +99,12 @@ var h_parsetk = (function() {
 		 * la recherche.
 		 * @returns {string} L'index-ième token trouvé à partir de start. 
 		 * 
-		 * EXEMPLE Soit la chaine
+		 * EXAMPLE Soit la chaine
 		 * Lorem ipsum dolor sit amet
 		 * 01234567890123456789012345 <- indice des caractères (commence à 0)
-		 * 
 		 * 1. Le premier token trouvé à partir du caractère d'indice 7
 		 * findToken: function("Lorem ipsum dolor sit amet", 1, 7)
 		 * => "psum"
-		 *
 		 * 2. Le deuxième token trouvé à partir du caractère d'indice 7
 		 * findToken: function("Lorem ipsum dolor sit amet", 2, 7)
 		 * => "dolor"
@@ -126,6 +124,14 @@ var h_parsetk = (function() {
 		 * souhaite que la chaine retournée commence.
 		 * @returns {string} La partie de la chaine str commençant après
 		 * l'index-ième token.
+		 * 
+		 * EXAMPLE
+		 * peekAfterToken("Lorem ipsum dolor sit amet", 0)
+		 * => "Lorem ipsum dolor sit amet"
+		 * peekAfterToken("Lorem ipsum dolor sit amet", 1)
+		 * => "ipsum dolor sit amet"
+		 * peekAfterToken("Lorem ipsum dolor sit amet", 2)
+		 * => "dolor sit amet"
 		 */
 		peekAfterToken: function(str, index) {
 			var firstTokenCharIndex = this.findTokenIndex(str, index + 1, 0);
