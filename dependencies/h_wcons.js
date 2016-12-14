@@ -2,7 +2,7 @@
 // dans son navigateur web.
 
 // Namespace de l'application.
-var h_wcons = {};
+var ns_wcons = {};
 
 /**
  * ---------------------------
@@ -11,7 +11,7 @@ var h_wcons = {};
  * CommandExitException est l'exception permettant de quitter une
  * commande.
  */
-h_wcons.CommandExitException = (function() {
+ns_wcons.CommandExitException = (function() {
 	
 	function CommandExitException(message) {
 	    this.message = message;
@@ -28,7 +28,7 @@ h_wcons.CommandExitException = (function() {
  * l'utilisateur.
  * NOTE Dans une commande self représente la commande.
  */
-h_wcons.CommandApi = (function(CommandExitException) {
+ns_wcons.CommandApi = (function(CommandExitException) {
 	
 	function CommandApi(cmd, input, ioLine) {
 		this._cmd = cmd;
@@ -63,13 +63,13 @@ h_wcons.CommandApi = (function(CommandExitException) {
 		this._ioLine.printPrompt(this._cmd.getPrompt());
 	}
 	return CommandApi;
-})(h_wcons.CommandExitException);
+})(ns_wcons.CommandExitException);
 
 /**
  * defaultInlineCommands est la liste des commandes chargées par défaut dans la
  * console. 
  */
-h_wcons.defaultInlineCommands = (function() {
+ns_wcons.defaultInlineCommands = (function() {
 	var defCmds = this;
 	return {
 		"echo": function(api) {
@@ -90,7 +90,7 @@ h_wcons.defaultInlineCommands = (function() {
  * 1. les commandes en lignes
  * 2. les commandes interactives. 
  */
-h_wcons.Command = (function(CommandApi, CommandExitException) {
+ns_wcons.Command = (function(CommandApi, CommandExitException) {
 	
 	// TODO supprimer le paramètre isInteractive
 	function Command(name, handler, isInteractive) {
@@ -156,7 +156,7 @@ h_wcons.Command = (function(CommandApi, CommandExitException) {
 	}
 	
 	return Command;
-})(h_wcons.CommandApi, h_wcons.CommandExitException);
+})(ns_wcons.CommandApi, ns_wcons.CommandExitException);
 
 /**
  * --------------------
@@ -165,14 +165,14 @@ h_wcons.Command = (function(CommandApi, CommandExitException) {
  * Une InlineCommand est une commande qui retourne immédiatement un résultat
  * (affiché par la console) et qui repasse la main à la console. 
  */
-h_wcons.InlineCommand = (function(Command) {
+ns_wcons.InlineCommand = (function(Command) {
 	function InlineCommand(name, handler) {
 		Command.call(this, name, handler);
 	}
 	InlineCommand.prototype = new Command();
 	
 	return InlineCommand
-})(h_wcons.Command);
+})(ns_wcons.Command);
 
 /**
  * -------------------------
@@ -183,7 +183,7 @@ h_wcons.InlineCommand = (function(Command) {
  * NOTE Par convention le nom des InteractiveCommand est suffixé par un "i"
  * (comme "interactive"). 
  */
-h_wcons.InteractiveCommand = (function(Command) {
+ns_wcons.InteractiveCommand = (function(Command) {
 	
 	function InteractiveCommand(name, handler) {
 		Command.call(this, name, handler);
@@ -214,7 +214,7 @@ h_wcons.InteractiveCommand = (function(Command) {
 	};
 	
 	return InteractiveCommand;
-})(h_wcons.Command);
+})(ns_wcons.Command);
 
 /**
  * ---------------
@@ -222,7 +222,7 @@ h_wcons.InteractiveCommand = (function(Command) {
  * ---------------
  * Une Commands est une liste de Command (en ligne ou interactives).  
  */
-h_wcons.Commands = (function(InlineCommand, InteractiveCommand) {
+ns_wcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	
 	function Commands(defaultInlineCommands) {
 		this._commands = [];
@@ -265,9 +265,9 @@ h_wcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	};
 	
 	return Commands;
-})(h_wcons.InlineCommand, h_wcons.InteractiveCommand);
+})(ns_wcons.InlineCommand, ns_wcons.InteractiveCommand);
 
-h_wcons.CommandInterpreter = (function() {
+ns_wcons.CommandInterpreter = (function() {
 	function CommandInterpreter(name, handler) {
 		Command.call(this, name, handler);
 	}
@@ -281,7 +281,7 @@ h_wcons.CommandInterpreter = (function() {
  * ----------------
  * Un Character représente un caractère tapé par l'utilisateur.
  */
-h_wcons.Character = (function() {
+ns_wcons.Character = (function() {
 	
 	// public
 	// ------
@@ -309,7 +309,7 @@ h_wcons.Character = (function() {
  * Une LineDomView représente une ligne de la console telle qu'elle est vue par
  * l'utilisateur.
  */
-h_wcons.LineDomView = (function() {
+ns_wcons.LineDomView = (function() {
 	
 	// public
 	// ------
@@ -370,7 +370,7 @@ h_wcons.LineDomView = (function() {
  * Elle gère le curseur, affiche les caractères tapé par l'utilisateur
  * et lit ce qui a été affiché entre deux pression de la touche "Entrée".
  */
-h_wcons.IoLine = (function(Character, LineDomView) {
+ns_wcons.IoLine = (function(Character, LineDomView) {
 	
 	// public
 	// ------
@@ -516,7 +516,7 @@ h_wcons.IoLine = (function(Character, LineDomView) {
 	}
 	
 	return IoLine;	
-})(h_wcons.Character, h_wcons.LineDomView);
+})(ns_wcons.Character, ns_wcons.LineDomView);
 
 /**
  * ------------
@@ -525,7 +525,7 @@ h_wcons.IoLine = (function(Character, LineDomView) {
  * Une Input est une chaine qui sait se parser. Elle correspond à une chaine
  * tapée par l'utilisateur.
  */
-h_wcons.Input = (function(parseTk) {
+ns_wcons.Input = (function(parseTk) {
 	
 	function Input(str) {
 		this._str = str;
@@ -556,7 +556,7 @@ h_wcons.Input = (function(parseTk) {
  * Une Console est un simulacre de console dans laquelle l'utilisateur peut
  * exécuter des commandes.
  */
-h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInlineCommands) {
+ns_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInlineCommands) {
 	
 	// public
 	// ------
@@ -639,7 +639,7 @@ h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInline
 	
 	function buildJConsoleDomElt(that) {
 		var outputElt = document.createElement("div");
-		outputElt.setAttribute("id", "h_wcons");
+		outputElt.setAttribute("id", "ns_wcons");
 		
 		// Pour écouter les keypress, le div doit d’abord pouvoir recevoir le focus
 		outputElt.tabIndex = "1";  // Permet au div de pouvoir recevoir le focus
@@ -721,12 +721,12 @@ h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInline
 	}
 
 	return Console;
-})(h_wcons.Input, h_keyboardtk, h_wcons.Commands, h_wcons.CommandApi, h_wcons.defaultInlineCommands);
+})(ns_wcons.Input, h_keyboardtk, ns_wcons.Commands, ns_wcons.CommandApi, ns_wcons.defaultInlineCommands);
 
 // API
-// TODO faire que h_wcons utilise webconns, avec ns = namespace pour plus de clareté.
-// })(webconns.Console, h_wcons);
-h_wcons = (function(Console, IoLine) {
+// TODO faire que ns_wcons utilise webconns, avec ns = namespace pour plus de clareté.
+// })(webconns.Console, ns_wcons);
+var h_wcons = (function(Console, IoLine) {
 	return {
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
@@ -747,7 +747,7 @@ h_wcons = (function(Console, IoLine) {
 			return jcons;
 		}
 	}
-})(h_wcons.Console, h_wcons.IoLine);
+})(ns_wcons.Console, ns_wcons.IoLine);
 
 // TODO Ajouter une commande lorem qui retourne Lorem ipsum...  
 // TODO Ajouter une commande "ascii" qui retourne le tableau ascii et
