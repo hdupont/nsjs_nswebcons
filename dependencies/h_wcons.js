@@ -364,18 +364,18 @@ h_wcons.LineDomView = (function() {
 
 /**
  * ------------------
- * @class ConsoleLine
+ * @class IoLine
  * ------------------
- * Une ConsoleLine permet de lire et d'écrire une ligne de la console.
+ * Une IoLine permet de lire et d'écrire une ligne de la console.
  * Elle gère le curseur, affiche les caractères tapé par l'utilisateur
  * et lit ce qui a été affiché entre deux pression de la touche "Entrée".
  */
-h_wcons.ConsoleLine = (function(Character, LineDomView) {
+h_wcons.IoLine = (function(Character, LineDomView) {
 	
 	// public
 	// ------
 	
-	function ConsoleLine(prefix) {
+	function IoLine(prefix) {
 		var eol = Character.createEolChar();
 		
 		this._chars = [eol];
@@ -388,7 +388,7 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 	
 	// Lecture
 	
-	ConsoleLine.prototype.readLine = function() {	
+	IoLine.prototype.readLine = function() {	
 		var str = this._chars.map(function(consChar) {
 			return consChar.getChar();
 		}).join("");
@@ -398,15 +398,15 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 	
 	// Affichage
 	
-	ConsoleLine.prototype.addInputChar = function(character) {
+	IoLine.prototype.addInputChar = function(character) {
 		addChar(this, character);
 		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.addOutputChar = function(character) {
+	IoLine.prototype.addOutputChar = function(character) {
 		addChar(this, character);
 		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.print = function(str) {
+	IoLine.prototype.print = function(str) {
 		clearChars(this);
 		var chars = [Character.createEolChar()];
 		for (var i = 0; i < str.length; i++) {
@@ -414,32 +414,32 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 			this.addOutputChar(char);
 		}
 	};
-	ConsoleLine.prototype.printPrompt = function(str) {
+	IoLine.prototype.printPrompt = function(str) {
 		this.print(str);
 		this._firstEditableChar = str.length;
 	};
-	ConsoleLine.prototype.println = function(str) {
+	IoLine.prototype.println = function(str) {
 		this.print(str);
 		this.moveForward();
 	};
 	
 	// Mouvements et édition
 	
-	ConsoleLine.prototype.moveCursorLeft = function() {
+	IoLine.prototype.moveCursorLeft = function() {
 		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
 			return;
 		}
 		this._cursorIndex--;
 		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.moveCursorRight = function() {
+	IoLine.prototype.moveCursorRight = function() {
 		if (this._cursorIndex === this._chars.length - 1) {
 			return;
 		}
 		this._cursorIndex++;
 		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.removeChar = function() {
+	IoLine.prototype.removeChar = function() {
 		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
 			return;
 		}
@@ -447,16 +447,16 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 		this._cursorIndex--;
 		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.moveCursorToEnd = function() {
+	IoLine.prototype.moveCursorToEnd = function() {
 		this._cursorIndex = this._chars.length - 1;
 		updateWithInputChars(this);
 	};
-	ConsoleLine.prototype.moveCursorToBeginning = function() {
+	IoLine.prototype.moveCursorToBeginning = function() {
 		this._cursorIndex = this._firstEditableChar;
 		this._domView.updateLine(this);
 	};
 	// Abandonne son contenu et avance
-	ConsoleLine.prototype.moveForward = function() {
+	IoLine.prototype.moveForward = function() {
 		var prevCursorPosition = this._cursorIndex;
 		clearChars(this);
 		this._prefix = "";
@@ -465,11 +465,11 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 	
 	// ???
 	
-	ConsoleLine.prototype.appendTo = function(consoleNode) {
+	IoLine.prototype.appendTo = function(consoleNode) {
 		this._consoleDomElement = consoleNode;
 		addNewDomView(this);
 	};
-	ConsoleLine.prototype.onCursorUpdate = function(character) {
+	IoLine.prototype.onCursorUpdate = function(character) {
 		// TODO
 		// plutot que d'appeller directement la vue dans addChar,
 		// on l'inscrit ici à l'événement addChar
@@ -515,7 +515,7 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 		updateWithInputChars(self);
 	}
 	
-	return ConsoleLine;	
+	return IoLine;	
 })(h_wcons.Character, h_wcons.LineDomView);
 
 /**
@@ -726,14 +726,14 @@ h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInline
 // API
 // TODO faire que h_wcons utilise webconns, avec ns = namespace pour plus de clareté.
 // })(webconns.Console, h_wcons);
-h_wcons = (function(Console, ConsoleLine) {
+h_wcons = (function(Console, IoLine) {
 	return {
 		/**
 		 * Ajoute une console dans l'élément dont l'ID est passé en paramètre.
 		 * @returns {JConsole} La console qui vient d'être ajoutée au DOM.
 		 */
 		appendTo: function(id) {
-			var ioLine = new ConsoleLine();
+			var ioLine = new IoLine();
 			
 			var jcons = new Console(ioLine);
 			jconsDomElt = jcons.getDomElt();
@@ -747,7 +747,7 @@ h_wcons = (function(Console, ConsoleLine) {
 			return jcons;
 		}
 	}
-})(h_wcons.Console, h_wcons.ConsoleLine);
+})(h_wcons.Console, h_wcons.IoLine);
 
 // TODO Ajouter une commande lorem qui retourne Lorem ipsum...  
 // TODO Ajouter une commande "ascii" qui retourne le tableau ascii et
