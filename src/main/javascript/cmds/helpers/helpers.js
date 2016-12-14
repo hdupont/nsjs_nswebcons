@@ -1,1 +1,1 @@
-ns_wcons.helpers = {};
+ns_wconsapp.helpers = {};

@@ -1,1 +1,0 @@
-var ns_wcons = {};

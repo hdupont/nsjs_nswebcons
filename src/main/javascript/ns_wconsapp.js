@@ -1,0 +1,1 @@
+var ns_wconsapp = {};

@@ -1,1 +1,1 @@
-ns_wcons.cmds = {};
+ns_wconsapp.cmds = {};

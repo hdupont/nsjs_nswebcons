@@ -1,1 +1,1 @@
-ns_wcons.cmds.interactive = {};
+ns_wconsapp.cmds.interactive = {};
