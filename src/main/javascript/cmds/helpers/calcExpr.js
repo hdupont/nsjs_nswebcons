@@ -1,4 +1,4 @@
-nscon.helpers.calcExpr = (function(OneOpCalculator) {
+h_wcons.helpers.calcExpr = (function(OneOpCalculator) {
 	
 	/**
 	 * 

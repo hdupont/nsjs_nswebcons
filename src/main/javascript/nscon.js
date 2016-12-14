@@ -1,1 +1,1 @@
-var nscon = {};
+var h_wcons = {};
