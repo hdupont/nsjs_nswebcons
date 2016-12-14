@@ -1,1 +1,1 @@
-h_wcons.cmds.inline = {};
+nscon.cmds.inline = {};

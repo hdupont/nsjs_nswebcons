@@ -1,1 +1,1 @@
-h_wcons.cmds.interactive = {};
+nscon.cmds.interactive = {};

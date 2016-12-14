@@ -1,8 +1,8 @@
-h_wcons.cmds.interactive.calci = function(api) {
+nscon.cmds.interactive.calci = function(api) {
 	var arg = api.peekInputAfterToken(1);
 	if (arg === "quit") {
 		api.exit();
 	}
-	var res = h_wcons.helpers.calcExpr(arg);
+	var res = nscon.helpers.calcExpr(arg);
 	api.println("= " + res);
 }
