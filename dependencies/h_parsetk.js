@@ -1,5 +1,6 @@
 var h_parsetk = (function() {
 	return {
+		
 		/**
 		 * Retourne l'indice du premier caractère qui ne soit pas un espace
 		 * dans la chaine str, en commençant la recherche à partir de l'indice
@@ -21,6 +22,7 @@ var h_parsetk = (function() {
 			}
 			return index;
 		},
+		
 		/**
 		 * Retourne l'indice du premier espace dans la chaine str, en
 		 * commençant la recherche à partir de l'indice start.
@@ -41,6 +43,7 @@ var h_parsetk = (function() {
 			}
 			return index;
 		},
+		
 		/**
 		 * Retourne le premier token trouvé à partir de start.
 		 * @param {string} str La chaine dans laquelle on veut effectuer
@@ -62,6 +65,7 @@ var h_parsetk = (function() {
 			}
 			return token;
 		},
+		
 		/**
 		 * Retourne l'indice du premier caractère du index-ième token trouvé à
 		 * partir du charactère d'indice start, avec index commençant à 1 et
@@ -85,6 +89,7 @@ var h_parsetk = (function() {
 			var firstTokenCharIndex = nonSpace;
 			return firstTokenCharIndex;
 		},
+		
 		/**
 		 * Retourne l'index-ième token trouvé à partir du charactère d'indice start,
 		 * avec index commençant à 1 et start commençant à zéro.
@@ -113,6 +118,7 @@ var h_parsetk = (function() {
 			var token = this.peekToken(str, firstTokenCharIndex);
 			return token;
 		},
+		
 		/**
 		 * Retourne la partie de la chaine str commençant après l'index-ième token.
 		 * @param {string} str La chaine dans laquelle va s'effectuer la recherche.
