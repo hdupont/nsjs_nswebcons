@@ -283,6 +283,8 @@ h_wcons.LineDomView = (function() {
 		this._prefix = "";
 		
 	}
+	// TODO WIP gérer prefix en interne dans ConsoleLine pour garantir la position
+	// du curseur et ainsi ne pas le faire dépasser sur la gauche.
 	LineDomView.prototype.updateLine = function(chars, cursorIndex, prefix) {
 		this._domContainer.innerHTML = prefix ? prefix : "";
 		
