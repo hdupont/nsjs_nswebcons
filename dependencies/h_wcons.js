@@ -48,6 +48,9 @@ h_wcons.CommandApi = (function(CommandExitException) {
 	CommandApi.prototype.exit = function() {
 		throw new CommandExitException("Argument cannot be less than zero");
 	}
+	CommandApi.prototype.printPrompt = function() {
+		this._ioLine.printPrompt(this._cmd.getPrompt());
+	}
 	return CommandApi;
 })(h_wcons.CommandExitException);
 
@@ -85,15 +88,18 @@ h_wcons.Command = (function(CommandApi, CommandExitException) {
 	// L'input qui a déclenché l'appelle et la ligne permettant les affichages.
 	Command.prototype.onInput = function(input, ioLine) {
 		var api = new CommandApi(this, input, ioLine);
-		try {
+//		try {
 			this.execute(api);
-		}
-		catch(e) {
-			if (e instanceof CommandExitException) {
-				this._quitted = true;
-				console.log(e);
-			}
-		}
+//		}
+//		catch(e) {
+//			if (e instanceof CommandExitException) {
+//				this._quitted = true;
+//				console.log(e);
+//			}
+//			else {
+//				throw e;
+//			}
+//		}
 	};
 	Command.prototype.execute = function(api) {
 		this._handler(api);
@@ -177,7 +183,7 @@ h_wcons.InteractiveCommand = (function(Command) {
 			this._isFirstExecution = false;
 			this._quitted = false;
 			api.println(this.getIntroduction());
-			api.print(this.getPrompt());
+			api.printPrompt();
 			return;
 		}
 		
@@ -283,8 +289,6 @@ h_wcons.LineDomView = (function() {
 		this._prefix = "";
 		
 	}
-	// TODO WIP gérer prefix en interne dans ConsoleLine pour garantir la position
-	// du curseur et ainsi ne pas le faire dépasser sur la gauche.
 	LineDomView.prototype.updateLine = function(chars, cursorIndex, prefix) {
 		this._domContainer.innerHTML = prefix ? prefix : "";
 		
@@ -347,7 +351,21 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 		this._prefix = prefix ? prefix : "";
 		this._domView = null;
 		this._consoleDomElement = null;
+		this._firstEditableChar = 0;
 	}
+	
+	// Lecture
+	
+	ConsoleLine.prototype.readLine = function() {	
+		var str = this._chars.map(function(consChar) {
+			return consChar.getChar();
+		}).join("");
+		
+		return str;
+	};
+	
+	// Affichage
+	
 	ConsoleLine.prototype.addInputChar = function(character) {
 		addChar(this, character);
 		updateWithInputChars(this);
@@ -355,13 +373,6 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 	ConsoleLine.prototype.addOutputChar = function(character) {
 		addChar(this, character);
 		updateWithInputChars(this);
-	};
-	ConsoleLine.prototype.readLine = function() {	
-		var str = this._chars.map(function(consChar) {
-			return consChar.getChar();
-		}).join("");
-		
-		return str;
 	};
 	ConsoleLine.prototype.print = function(str) {
 		clearChars(this);
@@ -371,12 +382,19 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 			this.addOutputChar(char);
 		}
 	};
+	ConsoleLine.prototype.printPrompt = function(str) {
+		this.print(str);
+		this._firstEditableChar = str.length;
+	};
 	ConsoleLine.prototype.println = function(str) {
 		this.print(str);
 		this.moveForward();
 	};
+	
+	// Mouvements et édition
+	
 	ConsoleLine.prototype.moveCursorLeft = function() {
-		if (this._cursorIndex === 0) {
+		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
 			return;
 		}
 		this._cursorIndex--;
@@ -390,7 +408,7 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.removeChar = function() {
-		if (this._cursorIndex === 0) {
+		if (this._cursorIndex === 0 || this._cursorIndex === this._firstEditableChar) {
 			return;
 		}
 		this._chars.splice(this._cursorIndex - 1, 1);
@@ -402,7 +420,7 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.moveCursorToBeginning = function() {
-		this._cursorIndex = 0;
+		this._cursorIndex = this._firstEditableChar;
 		this._domView.updateLine(this);
 	};
 	// Abandonne son contenu et avance
@@ -412,13 +430,12 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 		this._prefix = "";
 		addNewDomView(this, prevCursorPosition);
 	};
+	
+	// ???
+	
 	ConsoleLine.prototype.appendTo = function(consoleNode) {
 		this._consoleDomElement = consoleNode;
 		addNewDomView(this);
-	};
-	ConsoleLine.prototype.setTransientPrefix = function(str) {
-		this._prefix = str;
-		updateWithInputChars(this);
 	};
 	ConsoleLine.prototype.onCursorUpdate = function(character) {
 		// TODO
