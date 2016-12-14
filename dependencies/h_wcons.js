@@ -543,7 +543,7 @@ h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInline
 		return this._domElt;
 	};
 	Console.prototype.printPrompt = function() {
-		this._ioLine.print(this._prompt + " ");
+		this._ioLine.printPrompt(this._prompt + " ");
 	};
 	Console.prototype.moveCursorLeft = function() {
 		this._ioLine.moveLeft();
@@ -706,3 +706,8 @@ h_wcons = (function(Console, ConsoleLine) {
 		}
 	}
 })(h_wcons.Console, h_wcons.ConsoleLine);
+
+// TODO Ajouter une commande lorem qui retourne Lorem ipsum...  
+// TODO Ajouter une commande "ascii" qui retourne le tableau ascii et
+// <code>ascii x</code>
+// retourne la ligne du tableau correspondant au caractère "x".
