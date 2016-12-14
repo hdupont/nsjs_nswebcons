@@ -4,6 +4,13 @@
 // Namespace de l'application.
 var h_wcons = {};
 
+/**
+ * ---------------------------
+ * @class CommandExitException
+ * ---------------------------
+ * CommandExitException est l'exception permettant de quitter une
+ * commande.
+ */
 h_wcons.CommandExitException = (function() {
 	
 	function CommandExitException(message) {
@@ -13,10 +20,14 @@ h_wcons.CommandExitException = (function() {
 	return CommandExitException;
 })();
 
-//----------------
-//class CommandApi
-//----------------
-//Une CommandApi est l'API utilisable par une commande.
+/**
+ * -----------------
+ * @class CommandApi
+ * -----------------
+ * Une CommandApi est l'API utilisable par une commande définie par
+ * l'utilisateur.
+ * NOTE Dans une commande self représente la commande.
+ */
 h_wcons.CommandApi = (function(CommandExitException) {
 	
 	function CommandApi(cmd, input, ioLine) {
@@ -54,7 +65,10 @@ h_wcons.CommandApi = (function(CommandExitException) {
 	return CommandApi;
 })(h_wcons.CommandExitException);
 
-// Dans une commande self représente la commande.
+/**
+ * defaultInlineCommands est la liste des commandes chargées par défaut dans la
+ * console. 
+ */
 h_wcons.defaultInlineCommands = (function() {
 	var defCmds = this;
 	return {
@@ -67,11 +81,15 @@ h_wcons.defaultInlineCommands = (function() {
 	};
 })();
 
-//-------------
-//class Command
-//-------------
-// Une Command est une commande que la console peut exécuter.
-// Il y a deux types de commandes.
+/**
+ * --------------
+ * @class Command
+ * --------------
+ * Une Command est une commande que la console peut exécuter.
+ * Il y a deux types de commandes:
+ * 1. les commandes en lignes
+ * 2. les commandes interactives. 
+ */
 h_wcons.Command = (function(CommandApi, CommandExitException) {
 	
 	// TODO supprimer le paramètre isInteractive
@@ -140,12 +158,13 @@ h_wcons.Command = (function(CommandApi, CommandExitException) {
 	return Command;
 })(h_wcons.CommandApi, h_wcons.CommandExitException);
 
-//-------------------
-//class InlineCommand
-//-------------------
-// Une InlineCommand est une commande qui retourne immédiatement un résultat
-// et qui repasse la main à la console.
-//immédiatement un résultat qui est affiché dans la console.
+/**
+ * --------------------
+ * @class InlineCommand
+ * --------------------
+ * Une InlineCommand est une commande qui retourne immédiatement un résultat
+ * (affiché par la console) et qui repasse la main à la console. 
+ */
 h_wcons.InlineCommand = (function(Command) {
 	function InlineCommand(name, handler) {
 		Command.call(this, name, handler);
@@ -155,15 +174,15 @@ h_wcons.InlineCommand = (function(Command) {
 	return InlineCommand
 })(h_wcons.Command);
 
-//------------------------
-//class InteractiveCommand
-//------------------------
-// Une InteractiveCommand est une commande que prend la main sur le prompt.
-// Il faut quitter la commande pour repasser la main à la console.
-// 
-// NB
-// Par convention le nom des InteractiveCommand est suffixé par un "i"
-// (comme "interactive").
+/**
+ * -------------------------
+ * @class InteractiveCommand
+ * -------------------------
+ * Une InteractiveCommand est une commande que prend la main sur le prompt.
+ * Il faut quitter la commande pour repasser la main à la console. 
+ * NOTE Par convention le nom des InteractiveCommand est suffixé par un "i"
+ * (comme "interactive"). 
+ */
 h_wcons.InteractiveCommand = (function(Command) {
 	
 	function InteractiveCommand(name, handler) {
@@ -197,6 +216,12 @@ h_wcons.InteractiveCommand = (function(Command) {
 	return InteractiveCommand;
 })(h_wcons.Command);
 
+/**
+ * ---------------
+ * @class Commands
+ * ---------------
+ * Une Commands est une liste de Command (en ligne ou interactives).  
+ */
 h_wcons.Commands = (function(InlineCommand, InteractiveCommand) {
 	
 	function Commands(defaultInlineCommands) {
@@ -250,10 +275,12 @@ h_wcons.CommandInterpreter = (function() {
 	return CommandInterpreter
 })();
 
-// ---------------
-// class Character
-// ---------------
-// Un Character est un caractère d'une ligne de la console.
+/**
+ * ----------------
+ * @class Character
+ * ----------------
+ * Un Character représente un caractère tapé par l'utilisateur.
+ */
 h_wcons.Character = (function() {
 	
 	// public
@@ -275,10 +302,13 @@ h_wcons.Character = (function() {
 	return Character;	
 })();
 
-// -----------------
-// class LineDomView
-// -----------------
-// Une LineDomView une ligne de la console telle qu'elle est vue par l'utilisateur.
+/**
+ * ------------------
+ * @class LineDomView
+ * ------------------
+ * Une LineDomView représente une ligne de la console telle qu'elle est vue par
+ * l'utilisateur.
+ */
 h_wcons.LineDomView = (function() {
 	
 	// public
@@ -332,12 +362,14 @@ h_wcons.LineDomView = (function() {
 	return LineDomView;
 })();
 
-// -----------------
-// class ConsoleLine
-// -----------------
-// Une ConsoleLine est une ligne de la console.
-// Elle gère le curseuret, affiche des caractère et lit ce qui a été affiché
-// entre deux pression de la touche "Entrée".
+/**
+ * ------------------
+ * @class ConsoleLine
+ * ------------------
+ * Une ConsoleLine permet de lire et d'écrire une ligne de la console.
+ * Elle gère le curseur, affiche les caractères tapé par l'utilisateur
+ * et lit ce qui a été affiché entre deux pression de la touche "Entrée".
+ */
 h_wcons.ConsoleLine = (function(Character, LineDomView) {
 	
 	// public
@@ -486,6 +518,13 @@ h_wcons.ConsoleLine = (function(Character, LineDomView) {
 	return ConsoleLine;	
 })(h_wcons.Character, h_wcons.LineDomView);
 
+/**
+ * ------------
+ * @class Input
+ * ------------
+ * Une Input est une chaine qui sait se parser. Elle correspond à une chaine
+ * tapée par l'utilisateur.
+ */
 h_wcons.Input = (function(parseTk) {
 	
 	function Input(str) {
@@ -510,10 +549,13 @@ h_wcons.Input = (function(parseTk) {
 	return Input;
 })(h_parsetk);
 
-// --------------
-// class Console
-// --------------
-// Une Console est un simulacre de console.
+/**
+ * --------------
+ * @class Console
+ * --------------
+ * Une Console est un simulacre de console dans laquelle l'utilisateur peut
+ * exécuter des commandes.
+ */
 h_wcons.Console = (function(Input, keyboard, Commands, CommandApi, defaultInlineCommands) {
 	
 	// public
